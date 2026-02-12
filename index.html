@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BoostLock Recovery Note</title>
+    <style>
+        /* --- CSS Variables & Base Styles --- */
+        :root {
+            --bg-color: #FEFEFE;
+            --card-color: #F3EFEA;
+            --text-main: #433A2E;
+            --text-sub: #6E6A65;
+            --accent-color: #D8997F;
+            --shadow-color: rgba(63, 56, 44, 0.15);
+            --border-radius: 20px;
+            --font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            font-size: 16px;
+            overflow-x: hidden;
+            height: 100vh;
+            /* Prevent bounce scroll on iOS */
+            overscroll-behavior-y: none;
+        }
+
+        /* --- Layout & Utility --- */
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-bottom: calc(20px + var(--safe-area-bottom));
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        p {
+            margin: 0 0 1em 0;
+            color: var(--text-sub);
+        }
+
+        .text-center { text-align: center; }
+        .text-accent { color: var(--accent-color); }
+        .mb-1 { margin-bottom: 1rem; }
+        .mb-2 { margin-bottom: 2rem; }
+        .mt-2 { margin-top: 2rem; }
+
+        /* --- Components --- */
+        /* Buttons */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            text-decoration: none;
+            box-shadow: 0 4px 10px var(--shadow-color);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--text-main);
+            color: #fff;
+        }
+
+        .btn-accent {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--text-main);
+            color: var(--text-main);
+            box-shadow: none;
+        }
+
+        .btn-link {
+            background: none;
+            box-shadow: none;
+            color: var(--text-sub);
+            text-decoration: underline;
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        /* Header */
+        header {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            opacity: 0.8;
+        }
+
+        /* --- Screens --- */
+        
+        /* 0. Home */
+        #home-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+            padding: 20px;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+            line-height: 1.3;
+            margin-bottom: 10px;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            color: var(--text-sub);
+            margin-bottom: 40px;
+        }
+
+        /* 1. Check Steps (Wizard) */
+        #check-screen {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #E0E0E0;
+            transition: background-color 0.3s;
+        }
+
+        .step-dot.active {
+            background-color: var(--accent-color);
+        }
+
+        .question-title {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Slider */
+        .slider-container {
+            padding: 20px 0;
+            text-align: center;
+        }
+        
+        .slider-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 12px;
+            background: #ddd;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        /* Options */
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background-color: #fff;
+            border: 2px solid transparent;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: left;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .option-btn.selected {
+            border-color: var(--accent-color);
+            background-color: #FFF8F5;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .option-btn.multi-select::after {
+            content: '✓';
+            float: right;
+            opacity: 0;
+        }
+        .option-btn.selected.multi-select::after {
+            opacity: 1;
+        }
+
+        /* 3. Before/After & 5. Log */
+        #result-screen, #log-screen {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .result-message {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+            margin-top: 20px;
+            padding-bottom: 20px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+        }
+
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 30%;
+        }
+
+        .bar {
+            width: 40px;
+            background-color: var(--accent-color);
+            border-radius: 8px 8px 0 0;
+            transition: height 1s ease-out;
+            position: relative;
+            min-height: 4px; /* visibility for 0 values */
+        }
+        
+        .bar.prev {
+            background-color: #E0E0E0;
+        }
+
+        .bar-label {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+        
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* SVG Line Chart */
+        .svg-chart {
+            width: 100%;
+            height: 150px;
+            overflow: visible;
+        }
+
+        .chart-point {
+            fill: var(--accent-color);
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+
+        .chart-line {
+            fill: none;
+            stroke: var(--accent-color);
+            stroke-width: 3px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 4. Night Follow / Line Button */
+        .line-btn {
+            background-color: #06C755;
+            color: white;
+            margin-top: 10px;
+        }
+        
+        /* Modal for History details */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .history-date { font-size: 0.9rem; color: var(--text-sub); }
+        .history-val { font-weight: bold; color: var(--accent-color); }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <div class="logo">BoostLock Recovery Note</div>
+        </header>
+
+        <!-- 0. Home Screen -->
+        <section id="home-screen" class="fade-in">
+            <div class="text-center">
+                <h1 class="hero-title">今日の疲れを、<br>見える化。</h1>
+                <p class="hero-subtitle">来店前・施術後の変化を記録して<br>より良い回復へつなげます。</p>
+            </div>
+            
+            <div style="margin-top: auto; margin-bottom: 40px;">
+                <button class="btn btn-primary mb-1" onclick="app.startCheck('before')">来店前チェック</button>
+                <button class="btn btn-outline mb-1" onclick="app.startCheck('after')">施術後チェック</button>
+                <button class="btn btn-link" onclick="app.showLog()">回復ログを見る</button>
+            </div>
+        </section>
+
+        <!-- 1 & 2. Check Wizard (Input) -->
+        <section id="check-screen" class="hidden">
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot-1"></div>
+                <div class="step-dot" id="dot-2"></div>
+                <div class="step-dot" id="dot-3"></div>
+            </div>
+
+            <div id="step-1" class="step-content fade-in">
+                <h2 class="question-title">今の「疲れ度」は？</h2>
+                <div class="card">
+                    <div class="slider-container">
+                        <span class="slider-value" id="fatigue-val">5</span>
+                        <input type="range" id="fatigue-slider" min="0" max="10" value="5" oninput="app.updateSlider(this.value)">
+                        <div class="slider-labels">
+                            <span>元気</span>
+                            <span>限界</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center" style="font-size: 0.9rem;">数字が大きいほど疲れています</p>
+                <button class="btn btn-primary mt-2" onclick="app.nextStep(1)">次へ</button>
+            </div>
+
+            <div id="step-2" class="step-content hidden fade-in">
+                <h2 class="question-title">昨夜の睡眠は？</h2>
+                <div class="option-group">
+                    <button class="option-btn" onclick="app.selectSleep('good', this)">よく眠れた ☀️</button>
+                    <button class="option-btn" onclick="app.selectSleep('normal', this)">普通 🙂</button>
+                    <button class="option-btn" onclick="app.selectSleep('bad', this)">浅かった ☁️</button>
+                </div>
+                <!-- Hidden input for logic -->
+                <input type="hidden" id="sleep-input">
+            </div>
+
+            <div id="step-3" class="step-content hidden fade-in">
+                <h2 class="question-title">つらい所は？<br><span style="font-size:0.8rem; font-weight:normal">(複数選択可)</span></h2>
+                <div class="option-group">
+                    <button class="option-btn multi-select" onclick="app.togglePain('首', this)">首</button>
+                    <button class="option-btn multi-select" onclick="app.togglePain('肩', this)">肩</button>
+                    <button class="option-btn multi-select" onclick="app.togglePain('腰', this)">腰</button>
+                    <button class="option-btn multi-select" onclick="app.togglePain('頭', this)">頭</button>
+                    <button class="option-btn multi-select" onclick="app.togglePain('全身', this)">全身</button>
+                </div>
+                <button class="btn btn-primary mt-2" onclick="app.saveData()">記録する</button>
+            </div>
+        </section>
+
+        <!-- 3. Result Screen (Before/After) -->
+        <section id="result-screen" class="hidden fade-in">
+            <h2 class="result-message" id="result-msg">ちゃんと変わっています。<br>体はもう回復を始めています。</h2>
+            
+            <div class="card">
+                <h3>今回の変化</h3>
+                <div class="chart-container" id="compare-chart">
+                    <!-- JS generated bars -->
+                </div>
+            </div>
+
+            <div class="card" id="advice-card">
+                <h3>今夜のアドバイス</h3>
+                <p>施術後は水分を多めにとり、<br>早めの就寝を心がけましょう。</p>
+            </div>
+
+            <button class="btn btn-accent mb-1" onclick="app.showLog()">回復の推移を見る</button>
+            <button class="btn btn-link" onclick="app.goHome()">ホームに戻る</button>
+        </section>
+
+        <!-- 5. Log Screen -->
+        <section id="log-screen" class="hidden fade-in">
+            <h2 class="result-message">少しずつ、<br>確実に整っています。</h2>
+
+            <div class="card">
+                <h3>最近3回の疲れ度</h3>
+                <div style="text-align:center; padding: 20px 0;">
+                    <svg id="log-chart" class="svg-chart" viewBox="0 0 300 150">
+                        <!-- JS generated line chart -->
+                    </svg>
+                </div>
+                <div class="text-center" style="font-size: 0.8rem; color: var(--text-sub); display: flex; justify-content: space-around;">
+                    <span id="label-1"></span>
+                    <span id="label-2"></span>
+                    <span id="label-3"></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>これまでの記録</h3>
+                <div id="history-list">
+                    <!-- JS generated history -->
+                </div>
+            </div>
+
+            <button class="btn line-btn mb-1" onclick="alert('LINEアプリを開きます（ダミー）')">LINEで続きを相談する</button>
+            <button class="btn btn-outline" onclick="app.goHome()">ホームに戻る</button>
+        </section>
+
+    </div>
+
+    <script>
+        /**
+         * BoostLock Recovery Note Logic
+         */
+        const app = {
+            data: [],
+            currentSession: {
+                type: 'before', // 'before' | 'after'
+                fatigue: 5,
+                sleep: '',
+                pain: []
+            },
+
+            init() {
+                // Load data from localStorage
+                const stored = localStorage.getItem('boostlock_data');
+                if (stored) {
+                    this.data = JSON.parse(stored);
+                }
+            },
+
+            // Navigation
+            showScreen(id) {
+                document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(id).classList.remove('hidden');
+                document.getElementById(id).classList.add('fade-in');
+                window.scrollTo(0, 0);
+            },
+
+            goHome() {
+                this.showScreen('home-screen');
+            },
+
+            // Start Check Flow
+            startCheck(type) {
+                this.currentSession = {
+                    type: type,
+                    fatigue: 5,
+                    sleep: '',
+                    pain: [],
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Reset UI
+                document.getElementById('fatigue-slider').value = 5;
+                document.getElementById('fatigue-val').textContent = 5;
+                document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+                
+                // Show Step 1
+                this.showScreen('check-screen');
+                this.showStep(1);
+            },
+
+            showStep(step) {
+                document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`step-${step}`).classList.remove('hidden');
+                
+                // Update dots
+                document.querySelectorAll('.step-dot').forEach((dot, idx) => {
+                    dot.classList.toggle('active', idx < step);
+                });
+            },
+
+            nextStep(currentStep) {
+                if(currentStep === 1) {
+                    this.showStep(2);
+                }
+            },
+
+            // Inputs
+            updateSlider(val) {
+                document.getElementById('fatigue-val').textContent = val;
+                this.currentSession.fatigue = parseInt(val);
+            },
+
+            selectSleep(val, btn) {
+                this.currentSession.sleep = val;
+                // Visual feedback
+                const parent = btn.parentNode;
+                parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                
+                // Auto advance
+                setTimeout(() => {
+                    this.showStep(3);
+                }, 400);
+            },
+
+            togglePain(area, btn) {
+                const index = this.currentSession.pain.indexOf(area);
+                if (index === -1) {
+                    this.currentSession.pain.push(area);
+                    btn.classList.add('selected');
+                } else {
+                    this.currentSession.pain.splice(index, 1);
+                    btn.classList.remove('selected');
+                }
+            },
+
+            // Save & Calculate
+            saveData() {
+                this.data.push(this.currentSession);
+                localStorage.setItem('boostlock_data', JSON.stringify(this.data));
+                
+                this.renderResult();
+                this.showScreen('result-screen');
+            },
+
+            renderResult() {
+                const current = this.currentSession;
+                // Find previous data (not including current)
+                const prevData = this.data.length > 1 ? this.data[this.data.length - 2] : null;
+
+                const chartContainer = document.getElementById('compare-chart');
+                chartContainer.innerHTML = '';
+
+                // Create bars helper
+                const createBar = (label, value, isCurrent) => {
+                    const group = document.createElement('div');
+                    group.className = 'bar-group';
+                    
+                    // Height calculation (max 10 -> 100%)
+                    const heightPercent = Math.max((value / 10) * 100, 5); // min 5%
+                    
+                    const bar = document.createElement('div');
+                    bar.className = isCurrent ? 'bar' : 'bar prev';
+                    bar.style.height = '0%'; // animate from 0
+                    
+                    const valText = document.createElement('div');
+                    valText.className = 'bar-value';
+                    valText.textContent = value;
+
+                    const lbl = document.createElement('div');
+                    lbl.className = 'bar-label';
+                    lbl.textContent = label;
+
+                    bar.appendChild(valText);
+                    group.appendChild(bar);
+                    group.appendChild(lbl);
+                    
+                    return { group, bar, heightPercent };
+                };
+
+                // Logic: 
+                // If After check -> Show Before vs After (if Before exists recently) or just After
+                // If Before check -> Show Previous Visit vs Now
+                
+                let bar1, bar2;
+
+                if (current.type === 'after' && prevData && prevData.type === 'before') {
+                    // Before -> After comparison
+                    bar1 = createBar('施術前', prevData.fatigue, false);
+                    bar2 = createBar('施術後', current.fatigue, true);
+                    document.getElementById('result-msg').innerHTML = 'ちゃんと変わっています。<br>体はもう回復を始めています。';
+                } else if (prevData) {
+                    // History comparison
+                    bar1 = createBar('前回', prevData.fatigue, false);
+                    bar2 = createBar('今回', current.fatigue, true);
+                    document.getElementById('result-msg').innerHTML = '記録しました。<br>日々の積み重ねが大切です。';
+                } else {
+                    // First time
+                    bar1 = null;
+                    bar2 = createBar('今回', current.fatigue, true);
+                    document.getElementById('result-msg').innerHTML = 'はじめまして。<br>ここから回復を始めましょう。';
+                }
+
+                if(bar1) chartContainer.appendChild(bar1.group);
+                chartContainer.appendChild(bar2.group);
+
+                // Animate bars
+                setTimeout(() => {
+                    if(bar1) bar1.bar.style.height = bar1.heightPercent + '%';
+                    bar2.bar.style.height = bar2.heightPercent + '%';
+                }, 100);
+            },
+
+            showLog() {
+                this.renderLogChart();
+                this.renderHistoryList();
+                this.showScreen('log-screen');
+            },
+
+            renderLogChart() {
+                // Get last 3 records
+                const recent = this.data.slice(-3);
+                if (recent.length === 0) return;
+
+                const svg = document.getElementById('log-chart');
+                // Clear SVG content but keep viewbox
+                while (svg.lastChild) {
+                    svg.removeChild(svg.lastChild);
+                }
+
+                // Config
+                const width = 300;
+                const height = 150;
+                const padding = 30;
+                const xStep = width / (Math.max(recent.length, 2) - 1 || 1); 
+                // if 1 item, put in middle. if 2+, spread.
+                
+                // Helper to get Y coord (0 is bottom in graph logic, but SVG 0 is top)
+                // fatigue 0 (good) -> y=height, fatigue 10 (bad) -> y=0
+                // Wait, fatigue 0 is low bar usually, but for line chart:
+                // Let's say higher position = higher fatigue (bad)? 
+                // Or higher position = good health?
+                // Standard: Up is "High Fatigue".
+                const getY = (val) => height - padding - ((val / 10) * (height - 2 * padding));
+
+                let points = "";
+                recent.forEach((d, i) => {
+                    let x;
+                    if (recent.length === 1) x = width / 2;
+                    else x = (i / (recent.length - 1)) * (width - 2 * padding) + padding;
+
+                    const y = getY(d.fatigue);
+                    points += `${x},${y} `;
+                    
+                    // Draw Circle
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", x);
+                    circle.setAttribute("cy", y);
+                    circle.setAttribute("r", 6);
+                    circle.setAttribute("class", "chart-point");
+                    svg.appendChild(circle);
+
+                    // Update Labels
+                    const date = new Date(d.timestamp);
+                    const labelId = `label-${i + 1}`;
+                    const labelEl = document.getElementById(labelId);
+                    if(labelEl) labelEl.textContent = `${date.getMonth()+1}/${date.getDate()}`;
+                });
+
+                // Draw Line
+                if (recent.length > 1) {
+                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                    polyline.setAttribute("points", points);
+                    polyline.setAttribute("class", "chart-line");
+                    svg.insertBefore(polyline, svg.firstChild); // put behind circles
+                }
+            },
+
+            renderHistoryList() {
+                const list = document.getElementById('history-list');
+                list.innerHTML = '';
+                
+                // Show last 5 reverse
+                [...this.data].reverse().slice(0, 5).forEach(d => {
+                    const date = new Date(d.timestamp);
+                    const dateStr = `${date.getFullYear()}.${date.getMonth()+1}.${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                    
+                    const row = document.createElement('div');
+                    row.className = 'history-item';
+                    
+                    const typeLabel = d.type === 'before' ? '来店前' : '施術後';
+                    
+                    row.innerHTML = `
+                        <div>
+                            <div class="history-date">${dateStr}</div>
+                            <div style="font-size:0.8rem">${typeLabel}</div>
+                        </div>
+                        <div class="history-val">疲れ度: ${d.fatigue}</div>
+                    `;
+                    list.appendChild(row);
+                });
+            }
+        };
+
+        // Initialize
+        window.onload = () => app.init();
+
+    </script>
+</body>
+</html>
